@@ -21,7 +21,7 @@ public class KafkaProducer {
 
 
     @Autowired
-    private final KafkaTemplate<Integer, String> kafkaTemplate;
+    private final KafkaTemplate<Integer, Customer> kafkaTemplate;
 
     @Autowired
     private final ObjectMapper mapper;
@@ -32,20 +32,22 @@ public class KafkaProducer {
     public void send(Customer customer) throws JsonProcessingException {
 
         Integer key = customer.getCustomerId();
-        String value = mapper.writeValueAsString(customer);
+        //String value = mapper.writeValueAsString(customer);
 
-        ListenableFuture<SendResult<Integer, String>> result =
-                kafkaTemplate.send(new ProducerRecord<>(topic, null, key, value, null));
+        ListenableFuture<SendResult<Integer, Customer>> result =
+                kafkaTemplate.send(new ProducerRecord(topic, null, key, customer, null));
 
-        result.addCallback(new ListenableFutureCallback<SendResult<Integer, String>>() {
+        result.addCallback(new ListenableFutureCallback<SendResult<Integer, Customer>>() {
             @Override
             public void onFailure(Throwable ex) {
-                log.error(ex.getMessage());
+                 log.error(ex.getMessage());
+                 //best approach: save in database and retry later to produce again
             }
 
             @Override
-            public void onSuccess(SendResult<Integer, String> result) {
+            public void onSuccess(SendResult<Integer, Customer> result) {
                 log.info("Result Details - "+result.getRecordMetadata());
+
             }
         });
     }
